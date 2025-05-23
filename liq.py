@@ -303,7 +303,7 @@ if __name__ == "__main__":
                 tu,ttu = compute_test_utility_top(
                     L, price_map, demand_ch, test,
                     approach, defaults['zeta'], E_D_map, freq)
-                print(f"x%={x}: time={dur:.2f}s, test util={tu:.2f}, second util = {ttu:.2f}")
+                print(f"x%={x}: time={dur:.2f}s, test util={tu:.2f}")
         for approach in approaches:
             print(f"=== Approach: {approach} ===")
             # vary y%
@@ -316,7 +316,7 @@ if __name__ == "__main__":
                 tu,ttu = compute_test_utility_top(
                     L, price_map, demand_ch, test,
                     approach, defaults['zeta'], E_D_map, freq)
-                print(f"y%={y}: time={dur:.2f}s, test util={tu:.2f}, second util = {ttu:.2f}")
+                print(f"y%={y}: time={dur:.2f}s, test util={tu:.2f}")
         # vary alpha
         for alpha in alpha_values:
             cross_price = load_cross_price("distance_matrix_liquor.csv", alpha, defaults['beta'])
@@ -329,7 +329,7 @@ if __name__ == "__main__":
                 tu,ttu = compute_test_utility_top(
                     L, price_map, demand_ch, test,
                     approach, defaults['zeta'], E_D_map, freq)
-                print(f"alpha={alpha}, approach={approach}: time={dur:.2f}s, test util={tu:.2f}, second util = {ttu:.2f}")
+                print(f"alpha={alpha}, approach={approach}: time={dur:.2f}s, test util={tu:.2f}")
         # vary beta
         for beta in beta_values:
             cross_price = load_cross_price("distance_matrix_liquor.csv", defaults['alpha'], beta)
@@ -342,7 +342,7 @@ if __name__ == "__main__":
                 tu,ttu = compute_test_utility_top(
                     L, price_map, demand_ch, test,
                     approach, defaults['zeta'], E_D_map, freq)
-                print(f"beta={beta}, approach={approach}: time={dur:.2f}s, test util={tu:.2f}, second util = {ttu:.2f}")
+                print(f"beta={beta}, approach={approach}: time={dur:.2f}s, test util={tu:.2f}")
         # vary zeta
         cross_price = load_cross_price("distance_matrix_liquor.csv",
                                        defaults['alpha'], defaults['beta'])
@@ -356,4 +356,4 @@ if __name__ == "__main__":
                 tu,ttu = compute_test_utility_top(
                     L, price_map, demand_ch, test,
                     approach, zeta, E_D_map, freq)
-                print(f"zeta={zeta}, approach={approach}: time={dur:.2f}s, test util={tu:.2f}, second util = {ttu:.2f}")
+                print(f"zeta={zeta}, approach={approach}: time={dur:.2f}s, test util={tu:.2f}")
