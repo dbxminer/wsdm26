@@ -1,0 +1,1 @@
+Run the fruithut taxonomy calculator file to obtain the distance matrix for the liquor dataset. Then proceed to the other two python files to replicate the results presented in our paper. Make sure to add the transactional datasets to the directory before doing so.
