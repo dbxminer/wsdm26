@@ -79,21 +79,11 @@ def load_cross_price(distance_file, alpha=6, beta=0.6):
             sign = 1.0 if dist <= threshold else -1.0
             cross_price[B][A] = sign * abs(alpha) * math.exp(-beta * dist)
 
-    # DEBUG: print full cross-price elasticity matrix
-    #print("\n=== Cross-Price Elasticity Matrix ===")
-    #for B in sorted(cross_price):
-    #    for A in sorted(cross_price[B]):
-    #        print(f"ε[{B},{A}] = {cross_price[B][A]:.4f}")
-    #print("======================================\n")
-
     return cross_price
 
 # ---------------- Compute effective demand per item ----------------
 def compute_effective_demand(freq, repriced, orig_price, new_price, cross_price):
-    """
-    Compute the new effective demand and demand change for each item,
-    ensuring that demand cannot go negative (i.e., at least 0).
-    """
+
     E_D = {}
     demand_change = {}
     for B, qB in freq.items():
@@ -186,23 +176,12 @@ def mine_itemsets(transactions,
                 utiln[iset] = p_sum * supp
             else:
                 EDs = [E_D_map[B] * (supp / freq[B]) for B in iset]
-                ED_z = sum(EDs)/len(EDs)
+                ED_z = min(EDs)
                 utiln[iset] = p_sum * ED_z
         topn = sorted(utiln.items(), key=lambda x: x[1], reverse=True)[:top_k]
         pruned_curr = {iset: curr[iset] for iset, _ in topn}
         L[n] = pruned_curr
         prev = pruned_curr
-
-    # DEBUG: print support & effective demand for every itemset
-    #print(f"\n=== Itemsets (Approach = {approach}) ===")
-    #for level, isets in L.items():
-    #    print(f"  Level {level}:")
-    #    for iset, supp in isets.items():
-    #        # compute ED for the set the same way as in 'demand' util
-    #        EDs = [E_D_map[b] * (supp / freq[b]) for b in iset]
-    #        ED_set = sum(EDs) / len(EDs)
-    #        print(f"    {iset}: support = {supp}, effective demand ≈ {ED_set:.4f}")
-    #print("==========================================\n")
 
     return L, price, demand_change, E_D_map, freq
 
@@ -219,16 +198,12 @@ def compute_test_utility_top(L, price, demand_change, test_transactions,
             p_sum = sum(price[i] for i in iset)
             if approach == 'support':
                 util_map[iset] = p_sum * supp
-                second_util_map[iset] = p_sum * supp/len(iset)
             else:
                 EDs = [E_D_map[B] * (supp / freq[B]) for B in iset]
-                #print(EDs)
                 util_map[iset] = p_sum * min(EDs)
-                second_util_map[iset] = (p_sum * min(EDs))/len(iset)
 
     # Select top-zeta itemsets by training utility
     top_isets = sorted(util_map.items(), key=lambda x: x[1], reverse=True)[:zeta]
-    second_top_isets = sorted(second_util_map.items(), key=lambda x: x[1], reverse=True)[:zeta]
 
     # Sum up utilities in test fold: each time an itemset appears, add its price-sum
     total_util = 0.0
@@ -238,15 +213,8 @@ def compute_test_utility_top(L, price, demand_change, test_transactions,
         for items, _ in test_transactions:
             if sset.issubset(items):
                 total_util += pset
-    second_total_util = 0.0
-    for iset, _ in second_top_isets:
-        pset = sum(test_price[i] for i in iset)
-        sset = set(iset)
-        for items, _ in test_transactions:
-            if sset.issubset(items):
-                second_total_util += pset
 
-    return total_util, second_total_util
+    return total_util
 
 # ---------------- Experiment loops (varying lambda, x, y, alpha, beta, zeta) ----------------
 if __name__ == "__main__":
@@ -278,19 +246,6 @@ if __name__ == "__main__":
     for fold_idx, (train_idx, test_idx) in enumerate(kf.split(parsed)):
         train = [parsed[i] for i in train_idx]
         test = [parsed[i] for i in test_idx]
-        '''for approach in approaches:
-            print(f"=== Approach: {approach} ===")
-            # vary lambda
-            for lam in lambdas:
-                start = time.time()
-                L, price_map, demand_ch, E_D_map, freq = mine_itemsets(
-                    train, cross_price, approach, lam, max_size,
-                    defaults['x'], defaults['y'])
-                dur = time.time() - start
-                tu, ttu = compute_test_utility_top(
-                    L, price_map, demand_ch, test,
-                    approach, defaults['zeta'], E_D_map, freq)
-                print(f"λ={lam}: time={dur:.2f}s, test util={tu:.2f}, second util = {ttu:.2f}")'''
         for approach in approaches:
             print(f"=== Approach: {approach} ===")
             # vary x%
@@ -300,7 +255,7 @@ if __name__ == "__main__":
                     train, cross_price, approach,
                     defaults['lam'], max_size, x, defaults['y'])
                 dur = time.time() - start
-                tu,ttu = compute_test_utility_top(
+                tu = compute_test_utility_top(
                     L, price_map, demand_ch, test,
                     approach, defaults['zeta'], E_D_map, freq)
                 print(f"x%={x}: time={dur:.2f}s, test util={tu:.2f}")
@@ -313,7 +268,7 @@ if __name__ == "__main__":
                     train, cross_price, approach,
                     defaults['lam'], max_size, defaults['x'], y)
                 dur = time.time() - start
-                tu,ttu = compute_test_utility_top(
+                tu = compute_test_utility_top(
                     L, price_map, demand_ch, test,
                     approach, defaults['zeta'], E_D_map, freq)
                 print(f"y%={y}: time={dur:.2f}s, test util={tu:.2f}")
@@ -326,7 +281,7 @@ if __name__ == "__main__":
                     train, cross_price, approach,
                     defaults['lam'], max_size, defaults['x'], defaults['y'])
                 dur = time.time() - start
-                tu,ttu = compute_test_utility_top(
+                tu = compute_test_utility_top(
                     L, price_map, demand_ch, test,
                     approach, defaults['zeta'], E_D_map, freq)
                 print(f"alpha={alpha}, approach={approach}: time={dur:.2f}s, test util={tu:.2f}")
@@ -339,7 +294,7 @@ if __name__ == "__main__":
                     train, cross_price, approach,
                     defaults['lam'], max_size, defaults['x'], defaults['y'])
                 dur = time.time() - start
-                tu,ttu = compute_test_utility_top(
+                tu = compute_test_utility_top(
                     L, price_map, demand_ch, test,
                     approach, defaults['zeta'], E_D_map, freq)
                 print(f"beta={beta}, approach={approach}: time={dur:.2f}s, test util={tu:.2f}")
@@ -353,7 +308,7 @@ if __name__ == "__main__":
                     train, cross_price, approach,
                     defaults['lam'], max_size, defaults['x'], defaults['y'])
                 dur = time.time() - start
-                tu,ttu = compute_test_utility_top(
+                tu = compute_test_utility_top(
                     L, price_map, demand_ch, test,
                     approach, zeta, E_D_map, freq)
                 print(f"zeta={zeta}, approach={approach}: time={dur:.2f}s, test util={tu:.2f}")
